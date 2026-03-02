@@ -5,62 +5,129 @@
         </h2>
     </x-slot>
     <div class="bg-white rounded-xl shadow-sm p-6">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
 
             <div class="p-4 bg-white border">
                 <div class="text-sm text-gray-500">Total</div>
-                <div class="text-xl font-bold">{{ $stats['total'] }}</div>
+                <div class="text-xl font-bold">{{ $stats->total}}</div>
             </div>
 
             <div class="p-4 bg-white border">
                 <div class="text-sm text-gray-500">Success</div>
-                <div class="text-xl font-bold text-green-600"> {{ $stats['delivered'] }}</div>
+                <div class="text-xl font-bold text-green-600"> {{ $stats->success }}</div>
             </div>
 
             <div class="p-4 bg-white border">
                 <div class="text-sm text-gray-500">Failed</div>
-                <div class="text-xl font-bold text-red-600">{{ $stats['terminal_failure'] }}</div>
+                <div class="text-xl font-bold text-red-600">{{ $stats->failed }}</div>
             </div>
 
             <div class="p-4 bg-white border">
             <div class="text-sm text-gray-500">Pending</div>
             <div class="text-xl font-bold text-yellow-600">
-                {{ $stats['pending'] }}
+                {{ $stats->pending}}
             </div>
         </div>
 
             <div class="p-4 bg-white border">
                 <div class="text-sm text-gray-500">Failure %</div>
                 <div class="text-xl font-bold">
-                    {{  $stats['failure_rate']  ?? 0 }}%
+                    {{  $stats->failure_rate   ?? 0 }}%
                 </div>
             </div>
 
             <div class="p-4 bg-white border">
                 <div class="text-sm text-gray-500">Avg Latency</div>
                 <div class="text-xl font-bold">
-                    {{ $stats['avg_latency'] ?? '—' }} ms
+                    {{ $stats->avg_latency  ?? '—' }} ms
+                    
                 </div>
             </div>
         </div>
 
-        <h2 class="text-lg font-semibold mt-8 mb-2">
-            SMS Health by Bank
+         <h2 class="text-lg font-semibold mt-8 mb-2">
+            Volume by Service Type
         </h2>
 
         <table class="w-full text-sm border">
             <thead class="bg-gray-100">
                 <tr>
-                    <th>Bank</th>
+                    <th>Service</th>
                     <th>Total</th>
                     <th>Failed</th>
                     <th>Failure %</th>
                 </tr>
             </thead>
             <tbody>
-                @forelse($smsPerBank as $row)
+                @foreach($byService as $row)
                     <tr class="{{ $row->failure_rate > 5 ? 'bg-red-50' : '' }}">
-                        <td>{{ $row->client_code }}</td>
+                        <td>{{ $row->service_type }}</td>
+                        <td>{{ $row->total }}</td>
+                        <td>{{ $row->failed }}</td>
+                        <td>{{ $row->failure_rate }}%</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+
+                <h2 class="text-lg font-semibold mt-8 mb-2">
+                Health by Client (Banks)
+            </h2>
+
+            <table class="w-full text-sm border">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th>Client</th>
+                        <th>Total</th>
+                        <th>Failed</th>
+                        <th>Failure %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($byClient as $row)
+                        <tr class="{{ $row->failure_rate > 5 ? 'bg-red-50' : '' }}">
+                            <td>
+                                <a href="{{ route('monitor.client.show', $row->client_code) }}"
+                                class="text-blue-600 hover:underline">
+                                    {{ $row->client_code }}
+                                </a>
+                            </td>
+                            <td>{{ $row->total }}</td>
+                            <td>{{ $row->failed }}</td>
+                            <td>{{ $row->failure_rate }}%</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="4" class="text-center text-gray-500">
+                                No client activity
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+
+
+        <h2 class="text-lg font-semibold mt-8 mb-2">
+            Health by Vendor
+        </h2>
+
+        <table class="w-full text-sm border">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th>Vendor</th>
+                    <th>Total</th>
+                    <th>Failed</th>
+                    <th>Failure %</th>
+                </tr>
+            </thead>
+            <tbody>
+                    @forelse($byVendor as $row)
+                    <tr class="{{ $row->failure_rate > 5 ? 'bg-red-50' : '' }}">
+                        <td>  <a href="{{ route('monitor.vendor.show', $row->vendor_code) }}"
+                            class="text-blue-600 hover:underline">
+                                {{ $row->vendor_code }}
+                            </a>
+                        </td>
                         <td>{{ $row->total }}</td>
                         <td>{{ $row->failed }}</td>
                         <td>{{ $row->failure_rate }}%</td>
@@ -75,36 +142,38 @@
             </tbody>
         </table>
 
+
         <h2 class="text-lg font-semibold mt-8 mb-2">
-            SMS Health by Telco
+            Raw Status Distribution
         </h2>
 
         <table class="w-full text-sm border">
             <thead class="bg-gray-100">
                 <tr>
-                    <th>Telco</th>
+                    <th>Status</th>
                     <th>Total</th>
-                    <th>Failed</th>
-                    <th>Failure %</th>
                 </tr>
             </thead>
             <tbody>
-                @forelse($smsPerTelco as $row)
-                    <tr class="{{ $row->failure_rate > 5 ? 'bg-red-50' : '' }}">
-                        <td>{{ $row->vendor_code }}</td>
+                @forelse($byRawStatus as $row)
+                    <tr>
+                        <td>{{ $row->raw_status ?? 'UNKNOWN' }}</td>
                         <td>{{ $row->total }}</td>
-                        <td>{{ $row->failed }}</td>
-                        <td>{{ $row->failure_rate }}%</td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="4" class="text-center text-gray-500">
-                            No SMS activity in this window
+                        <td colspan="2" class="text-center text-gray-500">
+                            No status data
                         </td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
+
+
+       
+
+
 
         <h2 class="text-lg font-semibold mt-8 mb-2">
             SMS Volume Trend (last 15 minutes)

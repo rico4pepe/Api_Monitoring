@@ -4,7 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\DataSource;
-use App\Services\Observability\SmsIngestionService;    
+use App\Services\Observability\MonitoringIngestionService;    
 
 class PollSmsSources extends Command
 {
@@ -26,7 +26,7 @@ class PollSmsSources extends Command
      * Execute the console command.
      * 
      */
-    public function handle(SmsIngestionService $service): int
+    public function handle(MonitoringIngestionService $service): int
     {
         //
          $sources = DataSource::where('type', 'database')
